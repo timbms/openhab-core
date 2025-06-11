@@ -71,6 +71,7 @@ import org.openhab.core.io.rest.SseBroadcaster;
 import org.openhab.core.io.rest.core.item.EnrichedItemDTOMapper;
 import org.openhab.core.io.rest.sitemap.SitemapSubscriptionService;
 import org.openhab.core.io.rest.sitemap.SitemapSubscriptionService.SitemapSubscriptionCallback;
+import org.openhab.core.io.rest.sitemap.internal.JerseyResponseBuilderUtils.JerseyResponseBuilderDTO;
 import org.openhab.core.items.GenericItem;
 import org.openhab.core.items.Item;
 import org.openhab.core.items.ItemNotFoundException;
@@ -291,11 +292,11 @@ public class SitemapResource
     @Path("/{sitemapname: [a-zA-Z_0-9]+}/*")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "pollDataForSitemap", summary = "Polls the data for a whole sitemap. Not recommended due to potentially high traffic.", responses = {
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SitemapDTO.class))),
             @ApiResponse(responseCode = "404", description = "Sitemap with requested name does not exist"),
             @ApiResponse(responseCode = "400", description = "Invalid subscription id has been provided.") })
     public Response getSitemapData(@Context HttpHeaders headers,
             @HeaderParam(HttpHeaders.ACCEPT_LANGUAGE) @Parameter(description = "language") @Nullable String language,
+            @HeaderParam("X-Atmosphere-Transport") @Parameter(description = "X-Atmosphere-Transport for long polling") @Nullable String xAtmosphereTransport,
             @PathParam("sitemapname") @Parameter(description = "sitemap name") String sitemapname,
             @QueryParam("subscriptionid") @Parameter(description = "subscriptionid") @Nullable String subscriptionId,
             @QueryParam("includeHidden") @Parameter(description = "include hidden widgets") boolean includeHiddenWidgets) {
@@ -311,7 +312,7 @@ public class SitemapResource
         }
 
         boolean timeout = false;
-        if (headers.getRequestHeader("X-Atmosphere-Transport") != null) {
+        if (xAtmosphereTransport != null) {
             timeout = blockUntilChangeOccurs(sitemapname, null);
         }
         SitemapDTO responseObject = getSitemapBean(sitemapname, uriInfo.getBaseUriBuilder().build(), locale,
@@ -328,6 +329,7 @@ public class SitemapResource
             @ApiResponse(responseCode = "400", description = "Invalid subscription id has been provided.") })
     public Response getPageData(@Context HttpHeaders headers,
             @HeaderParam(HttpHeaders.ACCEPT_LANGUAGE) @Parameter(description = "language") @Nullable String language,
+            @HeaderParam("X-Atmosphere-Transport") @Parameter(description = "X-Atmosphere-Transport for long polling") @Nullable String xAtmosphereTransport,
             @PathParam("sitemapname") @Parameter(description = "sitemap name") String sitemapname,
             @PathParam("pageid") @Parameter(description = "page id") String pageId,
             @QueryParam("subscriptionid") @Parameter(description = "subscriptionid") @Nullable String subscriptionId,
@@ -344,7 +346,7 @@ public class SitemapResource
         }
 
         boolean timeout = false;
-        if (headers.getRequestHeader("X-Atmosphere-Transport") != null) {
+        if (xAtmosphereTransport != null) {
             // Make the REST-API pseudo-compatible with openHAB 1.x
             // The client asks Atmosphere for server push functionality,
             // so we do a simply listening for changes on the appropriate items
@@ -366,6 +368,7 @@ public class SitemapResource
     @Path(SEGMENT_EVENTS + "/subscribe")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "createSitemapEventSubscription", summary = "Creates a sitemap event subscription.", responses = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = JerseyResponseBuilderDTO.class))),
             @ApiResponse(responseCode = "201", description = "Subscription created."),
             @ApiResponse(responseCode = "503", description = "Subscriptions limit reached.") })
     public Object createEventSubscription() {
@@ -415,7 +418,15 @@ public class SitemapResource
     @Path(SEGMENT_EVENTS + "/{subscriptionid: [a-zA-Z_0-9-]+}")
     @Produces(MediaType.SERVER_SENT_EVENTS)
     @Operation(operationId = "getSitemapEvents", summary = "Get sitemap events.", responses = {
-            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "200", description = "OK", content = {
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = SitemapWidgetEvent.class)
+                ),
+                @Content(
+                    mediaType = "text/event-stream"
+                )
+            },
             @ApiResponse(responseCode = "400", description = "Missing sitemap or page parameter, or page not linked successfully to the subscription."),
             @ApiResponse(responseCode = "404", description = "Subscription not found.") })
     public void getSitemapEvents(@Context final SseEventSink sseEventSink, @Context final HttpServletResponse response,
