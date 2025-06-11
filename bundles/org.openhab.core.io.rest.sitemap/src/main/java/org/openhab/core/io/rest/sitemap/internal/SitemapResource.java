@@ -72,6 +72,7 @@ import org.openhab.core.io.rest.core.item.EnrichedItemDTOMapper;
 import org.openhab.core.io.rest.sitemap.SitemapSubscriptionService;
 import org.openhab.core.io.rest.sitemap.SitemapSubscriptionService.SitemapSubscriptionCallback;
 import org.openhab.core.io.rest.sitemap.internal.JerseyResponseBuilderUtils.JerseyResponseBuilderDTO;
+import org.openhab.core.io.rest.sitemap.internal.JerseyResponseBuilderUtils.JerseyResponseBuilderDTO;
 import org.openhab.core.items.GenericItem;
 import org.openhab.core.items.Item;
 import org.openhab.core.items.ItemNotFoundException;
@@ -296,6 +297,7 @@ public class SitemapResource
             @ApiResponse(responseCode = "400", description = "Invalid subscription id has been provided.") })
     public Response getSitemapData(@Context HttpHeaders headers,
             @HeaderParam(HttpHeaders.ACCEPT_LANGUAGE) @Parameter(description = "language") @Nullable String language,
+            @HeaderParam("X-Atmosphere-Transport") @Parameter(description = "X-Atmosphere-Transport for long polling") @Nullable String xAtmosphereTransport,
             @HeaderParam("X-Atmosphere-Transport") @Parameter(description = "X-Atmosphere-Transport for long polling") @Nullable String xAtmosphereTransport,
             @PathParam("sitemapname") @Parameter(description = "sitemap name") String sitemapname,
             @QueryParam("subscriptionid") @Parameter(description = "subscriptionid") @Nullable String subscriptionId,
