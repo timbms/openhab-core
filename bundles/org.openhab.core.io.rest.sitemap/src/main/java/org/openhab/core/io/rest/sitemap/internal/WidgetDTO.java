@@ -34,9 +34,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 
 @Schema(description = "A widget that may contain nested child widgets")
+<<<<<<< HEAD
 
 @Schema(description = "A widget that may contain nested child widgets")
 public class WidgetDTO {
+=======
+public class WidgetDTO {
+  
+>>>>>>> 8649bb27cd02b05923313d321c297075bf37acd7
     @Schema(description = "Unique widget ID")
     public String widgetId;
 
